@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>亚马逊运营分析计算器</title>
+    <style>
+        :root { 
+            --primary-color: #2c3e50; 
+            --secondary-color: #3b82f6; 
+            --success-color: #10b981; 
+        }
+        body { 
+            font-family: 'Segoe UI', system-ui; 
+            background: #f8f9fa; 
+            margin: 0; 
+            padding: 20px; 
+        }
+        .container { 
+            max-width: 1400px;
+            margin: 20px auto;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .header-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 25px;
+            position: relative;
+        }
+        h1 {
+            flex: 1;
+            text-align: center;
+            color: var(--primary-color);
+            border-bottom: 3px solid var(--secondary-color);
+            padding-bottom: 15px;
+            margin: 0 20px;
+        }
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        .export-btn {
+            background: var(--secondary-color);
+            color: white;
+            padding: 8px 15px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        .export-btn:hover {
+            opacity: 0.9;
+        }
+        .input-section { 
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        @media (max-width: 1200px) {
+            .input-section { grid-template-columns: repeat(3, 1fr); }
+        }
+        @media (max-width: 768px) {
+            .input-section { grid-template-columns: 1fr; }
+        }
+        .input-group { 
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid var(--secondary-color);
+            min-width: 0;
+        }
+        #productInfo label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+        #productInfo input {
+            width: 100%;
+            margin-top: 8px;
+            padding: 8px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 13px;
+            color: #666;
+        }
+        .input-group:not(#productInfo) > label { 
+            display: block;
+            margin-bottom: 12px;
+            font-weight: 600;
+            color: var(--primary-color);
+            font-size: 14px;
+        }
+        .input-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 8px;
+        }
+        .input-label {
+            font-size: 13px;
+            color: var(--primary-color);
+            white-space: nowrap;
+            margin-right: 10px;
+        }
+        .input-group:not(#productInfo) input, 
+        .input-group:not(#productInfo) select { 
+            width: 120px;
+            padding: 8px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 13px;
+        }
+        .results-container { 
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 25px;
+            margin-top: 30px;
+        }
+        .result-card { 
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            border-top: 4px solid var(--secondary-color);
+            min-height: 300px;
+        }
+        .result-card h3 { 
+            color: var(--primary-color);
+            margin: 0 0 15px 0;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .result-item { 
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .result-item:last-child { border-bottom: none; }
+        .label { 
+            color: #7f8c8d;
+            font-weight: 500;
+            min-width: 160px;
+        }
+        .value { 
+            color: var(--primary-color);
+            font-weight: 600;
+            text-align: right;
+        }
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            margin-top: 30px;
+        }
+        .metric-card {
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafe 100%);
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.05);
+            border: 1px solid rgba(238, 242, 247, 0.8);
+            position: relative;
+            overflow: hidden;
+        }
+        .metric-card::before {
+            content: "";
+            position: absolute;
+            top: -50px;
+            right: -50px;
+            width: 100px;
+            height: 100px;
+            background: rgba(52, 152, 219, 0.08);
+            border-radius: 50%;
+        }
+        .metric-title {
+            color: #64748b;
+            font-size: 14px;
+            margin: 0 0 15px 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .metric-value {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+        }
+        .value-unit {
+            font-size: 16px;
+            color: #94a3b8;
+            font-weight: 500;
+        }
+        .trend-indicator {
+            font-size: 14px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            display: inline-flex;
+            align-items: center;
+        }
+        .trend-up { color: #10b981; background: rgba(16, 185, 129, 0.1); }
+        .trend-down { color: #ef4444; background: rgba(239, 68, 68, 0.1); }
+        .mini-chart {
+            height: 80px;
+            margin: 15px -25px -25px;
+            position: relative;
+        }
+        .donut-chart {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: conic-gradient(var(--fill-color) 0% var(--fill-percent), #e2e8f0 0);
+        }
+        .donut-inner {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            background: white;
+            border-radius: 50%;
+            top: 10px;
+            left: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+        .mini-bars {
+            display: flex;
+            align-items: flex-end;
+            height: 100%;
+            gap: 8px;
+            padding: 0 15px;
+        }
+        .mini-bar {
+            width: 20px;
+            background: var(--secondary-color);
+            border-radius: 4px 4px 0 0;
+            transition: height 0.3s ease;
+        }
+        input {
+            background: white !important;
+            color: #666 !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header-container">
+            <div class="header-controls">
+                <div class="exchange-rate-group">
+                    <span class="exchange-rate-label">💰 汇率 (CNY/USD):</span>
+                    <input type="number" id="exchangeRate" value="7" step="0.01" required>
+                </div>
+                <button class="export-btn" onclick="saveAsHTML()">保存</button>
+            </div>
+            <div style="display: flex; align-items: center; gap: 15px; justify-content: center; flex: 1;">
+                <h1>亚马逊投产比分析计算器</h1>
+                <img src="https://gd-hbimg.huaban.com/39a2815594b466261717ffcdeb8d4d24b0d99cf22bea9-gDxliQ_fw1200webp" 
+                     style="height: 40px; width: auto; margin-bottom: 8px;">
+            </div>
+        </div>
+
+        <div class="input-section">
+            <div class="input-group" id="productInfo">
+                <label>📦 产品信息</label>
+                <input type="text" id="productName" placeholder="产品名称">
+                <input type="text" id="amazonLink" placeholder="亚马逊链接">
+                <input type="text" id="link1688" placeholder="1688链接">
+            </div>
+
+            <div class="input-group">
+                <label>📈 销售数据</label>
+                <div class="input-row">
+                    <span class="input-label">月销量</span>
+                    <input type="number" id="monthlySales" value="600" required>
+                </div>
+                <div class="input-row">
+                    <span class="input-label">搜索转化率 (%)</span>
+                    <input type="number" id="searchConversion" value="5" step="0.1" required>
+                </div>
+                <div class="input-row">
+                    <span class="input-label">退货率 (%)</span>
+                    <input type="number" id="returnRate" value="1.8" step="0.1" required>
+                </div>
+                <div class="input-row">
+                    <span class="input-label">销售价格 ($)</span>
+                    <input type="number" id="salesPrice" value="35" step="0.1" required>
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label>🧮 成本计算</label>
+                <div class="input-row">
+                    <span class="input-label">采购成本 (￥)</span>
+                    <input type="number" id="purchaseCostCNY" value="65" required>
+                </div>
+                <div class="input-row">
+                    <span class="input-label">产品重量 (kg)</span>
+                    <input type="number" id="weight" value="1.3" step="0.1" required>
+                </div>
+                <div class="input-row">
+                    <span class="input-label">物流方式</span>
+                    <select id="shippingMethod">
+                        <option value="空运">空运</option>
+                        <option value="海运" selected>海运</option>
+                    </select>
+                </div>
+                <div class="input-row">
+                    <span class="input-label">物流单价 (￥/kg)</span>
+                    <input type="number" id="shippingPrice" value="7" required>
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label>⚙️ 费用设置</label>
+                <div class="input-row">
+                    <span class="input-label">FBA物流费 ($)</span>
+                    <input type="number" id="fbaFee" value="7.03" step="0.1" required>
+                </div>
+                <div class="input-row">
+                    <span class="input-label">佣金 (%)</span>
+                    <input type="number" id="commission" value="15" step="0.1" required>
+                </div>
+                <div class="input-row">
+                    <span class="input-label">配置费 ($)</span>
+                    <input type="number" id="configFee" value="0.34" step="0.1" required>
+                </div>
+                <div class="input-row">
+                    <span class="input-label">仓储费 ($)</span>
+                    <input type="number" id="storageFee" value="0.55" step="0.1" required>
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label>🏦 资金设置</label>
+                <div class="input-row">
+                    <span class="input-label">广告占比 (%)</span>
+                    <input type="number" id="adRate" value="10" step="0.1" required>
+                </div>
+                <div class="input-row">
+                    <span class="input-label">压货天数</span>
+                    <input type="number" id="stockDays" value="120" required>
+                </div>
+                <div class="input-row">
+                    <span class="input-label">账期天数</span>
+                    <input type="number" id="accountPeriod" value="">
+                </div>
+                <div class="input-row">
+                    <span class="input-label">提现周期</span>
+                    <input type="number" id="withdrawPeriod" value="15">
+                </div>
+            </div>
+        </div>
+
+        <div class="results-container" id="results"></div>
+        <div class="dashboard" id="dashboard"></div>
+    </div>
+
+    <script>
+        function calculate() {
+            try {
+                const getValue = id => parseFloat(document.getElementById(id).value) || 0;
+                
+                const inputs = {
+                    exchangeRate: getValue('exchangeRate'),
+                    monthlySales: getValue('monthlySales'),
+                    searchConversion: getValue('searchConversion') / 100,
+                    returnRate: getValue('returnRate') / 100,
+                    salesPrice: getValue('salesPrice'),
+                    purchaseCostCNY: getValue('purchaseCostCNY'),
+                    weight: getValue('weight'),
+                    shippingPrice: getValue('shippingPrice'),
+                    fbaFee: getValue('fbaFee'),
+                    commission: getValue('commission') / 100,
+                    configFee: getValue('configFee'),
+                    storageFee: getValue('storageFee'),
+                    adRate: getValue('adRate') / 100,
+                    stockDays: getValue('stockDays'),
+                    accountPeriod: getValue('accountPeriod'),
+                    withdrawPeriod: getValue('withdrawPeriod')
+                };
+
+                const shippingCostCNY = inputs.weight * inputs.shippingPrice;
+                const purchaseCostUSD = inputs.purchaseCostCNY / inputs.exchangeRate;
+                const shippingCostUSD = shippingCostCNY / inputs.exchangeRate;
+                const commission = inputs.salesPrice * inputs.commission;
+                const returnFee = inputs.salesPrice * inputs.returnRate;
+                const adFee = inputs.salesPrice * inputs.adRate;
+
+                const platformRefund = inputs.salesPrice - commission - inputs.configFee 
+                    - inputs.storageFee - returnFee - adFee - inputs.fbaFee;
+                const platformRefundCNY = platformRefund * inputs.exchangeRate;
+                const profitUSD = platformRefund - purchaseCostUSD - shippingCostUSD;
+                const profitCNY = profitUSD * inputs.exchangeRate;
+                const profitRate = profitUSD / inputs.salesPrice;
+
+                const monthlyRevenueUSD = inputs.monthlySales * inputs.salesPrice;
+                const monthlyRevenueCNY = monthlyRevenueUSD * inputs.exchangeRate;
+                const monthlyProfitCNY = (profitCNY * inputs.monthlySales) / 10000;
+                const annualProfitCNY = monthlyProfitCNY * 12;
+
+                const totalCostCNY = inputs.purchaseCostCNY + shippingCostCNY;
+                const costReturnRatio = profitCNY / totalCostCNY;
+                const dailySales = inputs.monthlySales / 30;
+                const stockQuantity = dailySales * inputs.stockDays;
+                const stockCostCNY = (stockQuantity * totalCostCNY) / 10000;
+                const cashCycle = inputs.stockDays - (inputs.accountPeriod || 0) + (inputs.withdrawPeriod || 0);
+                const capitalOccupiedCNY = (cashCycle * dailySales * totalCostCNY) / 10000;
+                const annualROI = annualProfitCNY / capitalOccupiedCNY;
+                const paybackDays = (stockCostCNY / annualProfitCNY) * 365;
+
+                const resultCards = [
+                    {
+                        title: '📦 成本明细',
+                        items: [
+                            { label: '采购成本 (￥)', value: inputs.purchaseCostCNY.toFixed(2) },
+                            { label: '头程成本 (￥)', value: shippingCostCNY.toFixed(2) },
+                            { label: '★ 总成本 (￥) ★', value: totalCostCNY.toFixed(2) },
+                            { label: 'FBA物流费 ($)', value: inputs.fbaFee.toFixed(2) },
+                            { label: '佣金 ($)', value: commission.toFixed(2) },
+                            { label: '仓储费 ($)', value: inputs.storageFee.toFixed(2) },
+                            { label: '退货成本 ($)', value: returnFee.toFixed(2) }
+                        ]
+                    },
+                    {
+                        title: '💹 利润分析',
+                        items: [
+                            { label: '净利润率', value: (profitRate * 100).toFixed(2) + '%' },
+                            { label: '单件利润 (￥)', value: profitCNY.toFixed(2) },
+                            { label: '单件利润 ($)', value: profitUSD.toFixed(2) },
+                            { label: '平台回款 (￥)', value: platformRefundCNY.toFixed(2) },
+                            { label: '平台回款 ($)', value: platformRefund.toFixed(2) },
+                            { label: '月利润 (￥万)', value: monthlyProfitCNY.toFixed(2) },
+                            { label: '年利润 (￥万)', value: annualProfitCNY.toFixed(2) }
+                        ]
+                    },
+                    {
+                        title: '📊 销售表现',
+                        items: [
+                            { label: '月销量', value: inputs.monthlySales },
+                            { label: '销售价格 ($)', value: inputs.salesPrice.toFixed(2) },
+                            { label: '月销售额 (￥)', value: monthlyRevenueCNY.toFixed(2) },
+                            { label: '月销售额 ($)', value: monthlyRevenueUSD.toFixed(2) },
+                            { label: '日均销量', value: dailySales.toFixed(2) },
+                            { label: '广告支出 ($)', value: adFee.toFixed(2) },
+                            { label: '广告占比 (%)', value: (inputs.adRate * 100).toFixed(2) + '%' },
+                            { label: '搜索转化率', value: (inputs.searchConversion * 100).toFixed(2) + '%' },
+                            { label: '退货率', value: (inputs.returnRate * 100).toFixed(2) + '%' }
+                        ]
+                    },
+                    {
+                        title: '🏦 资金分析',
+                        items: [
+                            { label: '资金占用 (￥万)', value: capitalOccupiedCNY.toFixed(2) },
+                            { label: '压货成本 (￥万)', value: stockCostCNY.toFixed(2) },
+                            { label: '压货数量', value: stockQuantity.toFixed(2) },
+                            { label: '压货天数', value: inputs.stockDays },
+                            { label: '现金周期 (天)', value: cashCycle.toFixed(2) },
+                            { label: '账期天数', value: inputs.accountPeriod || '未设置' },
+                            { label: '成本回报率', value: (costReturnRatio * 100).toFixed(2) + '%' },
+                            { label: '年回报率 (%)', value: (annualROI * 100).toFixed(2) + '%' },
+                            { label: '回本周期 (天)', value: paybackDays.toFixed(2) }
+                        ]
+                    }
+                ];
+
+                const resultsContainer = document.getElementById('results');
+                resultsContainer.innerHTML = '';
+                resultCards.forEach(card => {
+                    const cardHTML = `
+                        <div class="result-card">
+                            <h3>${card.title}</h3>
+                            ${card.items.map(item => `
+                                <div class="result-item">
+                                    <span class="label">${item.label}</span>
+                                    <span class="value">${item.value}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+                    resultsContainer.innerHTML += cardHTML;
+                });
+
+                updateDashboard({
+                    profitRate,
+                    annualROI,
+                    monthlyProfitCNY,
+                    paybackDays,
+                    monthlyRevenueCNY,
+                    totalCostCNY,
+                    capitalOccupiedCNY,
+                    costReturnRatio,
+                    cashCycle
+                });
+
+            } catch (error) {
+                console.error("计算错误:", error);
+            }
+        }
+
+        function updateDashboard(metrics) {
+            try {
+                const dashboard = document.getElementById('dashboard');
+                
+                dashboard.innerHTML = `
+<div class="metric-card">
+    <h4 class="metric-title">📈 核心利润率</h4>
+    <div class="metric-value">
+        ${(metrics.profitRate * 100).toFixed(1)}
+        <span class="value-unit">%</span>
+    </div>
+    <div class="donut-chart" 
+        style="--fill-color: #3b82f6; --fill-percent: ${metrics.profitRate * 100}%">
+    </div>
+</div>
+
+<div class="metric-card">
+    <h4 class="metric-title">🚀 年化回报率</h4>
+    <div class="metric-value">
+        ${(metrics.annualROI * 100).toFixed(1)}
+        <span class="value-unit">%</span>
+        <div class="trend-indicator ${metrics.annualROI > 0.3 ? 'trend-up' : 'trend-down'}">
+            ${metrics.annualROI > 0.3 ? '📈 健康' : '📉 预警'}
+        </div>
+    </div>
+    <div class="mini-chart">
+        <div class="mini-bars">
+            ${[metrics.profitRate, metrics.annualROI, metrics.costReturnRatio]
+                .map(rate => 
+                    `<div class="mini-bar" 
+                        style="height: ${Math.min(rate * 200, 100)}%;
+                               background: #3b82f6">
+                    </div>`
+                ).join('')}
+        </div>
+    </div>
+</div>
+
+<div class="metric-card">
+    <h4 class="metric-title">💰 月利润规模</h4>
+    <div class="metric-value">
+        ${metrics.monthlyProfitCNY.toFixed(1)}
+        <span class="value-unit">万元</span>
+    </div>
+    <div class="mini-chart">
+        <div style="background: #e2e8f0; height: 6px; border-radius: 3px;">
+            <div style="width: ${Math.min(metrics.monthlyProfitCNY / 50 * 100, 100)}%; 
+                        height: 100%; 
+                        background: linear-gradient(90deg, #3b82f6 0%, #6366f1 100%); 
+                        border-radius: 3px;">
+            </div>
+        </div>
+        <div style="margin-top:12px; color: #64748b; font-size:13px;">
+            ▲ 行业标杆 ${(50).toFixed(1)}万元
+        </div>
+    </div>
+</div>
+
+<div class="metric-card">
+    <h4 class="metric-title">⏳ 回本周期</h4>
+    <div class="metric-value">
+        ${metrics.paybackDays.toFixed(0)}
+        <span class="value-unit">天</span>
+        <div class="trend-indicator ${metrics.paybackDays < 180 ? 'trend-up' : 'trend-down'}">
+            ${metrics.paybackDays < 180 ? '⏱️ 优秀' : '⚠️ 注意'}
+        </div>
+    </div>
+    <div class="mini-chart">
+        <div class="mini-bars">
+            ${[30, 90, 180].map(d => 
+                `<div class="mini-bar" 
+                    style="height: ${100 - (metrics.paybackDays / d * 100)}%;
+                           background: ${metrics.paybackDays <= d ? '#10b981' : '#f59e0b'}">
+                </div>`
+            ).join('')}
+        </div>
+    </div>
+</div>
+
+<div class="metric-card">
+    <h4 class="metric-title">📊 成本回报率</h4>
+    <div class="metric-value">
+        ${(metrics.costReturnRatio * 100).toFixed(1)}
+        <span class="value-unit">%</span>
+    </div>
+    <div class="donut-chart" 
+        style="--fill-color: #f59e0b; --fill-percent: ${metrics.costReturnRatio * 100}%">
+    </div>
+</div>
+
+<div class="metric-card">
+    <h4 class="metric-title">⏱️ 现金周期</h4>
+    <div class="metric-value">
+        ${metrics.cashCycle.toFixed(0)}
+        <span class="value-unit">天</span>
+    </div>
+    <div class="mini-chart">
+        <div style="background: #e2e8f0; height: 6px; border-radius: 3px;">
+            <div style="width: ${Math.min(metrics.cashCycle / 90 * 100, 100)}%; 
+                        height: 100%; 
+                        background: linear-gradient(90deg, #10b981 0%, #3b82f6 100%); 
+                        border-radius: 3px;">
+            </div>
+        </div>
+        <div style="margin-top:12px; color: #64748b; font-size:13px;">
+            ▲ 理想周期 ≤45天
+        </div>
+    </div>
+</div>
+
+<div class="metric-card">
+    <h4 class="metric-title">📊 销售额构成</h4>
+    <div class="metric-value">${(metrics.monthlyRevenueCNY/10000).toFixed(1)}<span class="value-unit">万元</span></div>
+    <div class="mini-chart">
+        <div style="display: flex; gap: 15px; font-size: 12px;">
+            <div style="color: #3b82f6">● 销售额</div>
+            <div style="color: #94a3b8">● 成本 ${metrics.totalCostCNY.toFixed(1)}元</div>
+        </div>
+    </div>
+</div>
+
+<div class="metric-card">
+    <h4 class="metric-title">🔄 资金效率</h4>
+    <div class="metric-value">${metrics.capitalOccupiedCNY.toFixed(1)}<span class="value-unit">万元</span></div>
+    <div class="mini-chart">
+        <div style="font-size: 13px; color: #64748b">
+            ⚡ 周转率 ${(1/metrics.costReturnRatio).toFixed(1)}次/年
+        </div>
+    </div>
+</div>
+                `;
+            } catch (error) {
+                console.error("仪表盘渲染错误:", error);
+            }
+        }
+
+        function saveAsHTML() {
+            try {
+                // 收集所有输入参数
+                const inputs = {};
+                document.querySelectorAll('input, select').forEach(element => {
+                    inputs[element.id] = element.value;
+                });
+
+                // 收集计算结果
+                const results = {
+                    html: document.getElementById('results').innerHTML,
+                    dashboard: document.getElementById('dashboard').innerHTML
+                };
+
+                // 创建携带数据的HTML模板
+                const template = `<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${document.getElementById('productName').value || '亚马逊分析报告'}</title>
+    <style>${document.querySelector('style').innerHTML}</style>
+</head>
+<body>
+    <div class="container">${document.querySelector('.container').innerHTML}</div>
+    <script>
+        // 嵌入核心逻辑
+        ${calculate.toString()}
+        ${updateDashboard.toString()}
+
+        // 状态恢复
+        const SAVED_STATE = {
+            inputs: ${JSON.stringify(inputs)},
+            results: ${JSON.stringify(results)}
+        };
+
+        document.querySelectorAll('input, select').forEach(el => {
+            el.value = SAVED_STATE.inputs[el.id] || '';
+        });
+        
+        // 恢复计算结果
+        document.getElementById('results').innerHTML = SAVED_STATE.results.html;
+        document.getElementById('dashboard').innerHTML = SAVED_STATE.results.dashboard;
+
+        // 重新绑定事件
+        document.querySelectorAll('input, select').forEach(el => {
+            el.addEventListener('input', calculate);
+        });
+
+        // 更新保存功能
+        document.querySelector('.export-btn').onclick = ${saveAsHTML.toString()};
+    <\/script>
+</body>
+</html>`;
+
+                // 创建下载
+                const productName = document.getElementById('productName').value.replace(/[^\w\u4e00-\u9fa5]/g, '') || 'analysis';
+                const dateStr = new Date().toISOString().split('T')[0];
+                const blob = new Blob([template], {type: 'text/html'});
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = `${productName}_${dateStr}.html`;
+                link.click();
+            } catch (error) {
+                console.error('保存失败:', error);
+                alert('保存失败，请查看控制台');
+            }
+        }
+
+        // 初始化事件监听
+        document.querySelectorAll('input, select').forEach(el => {
+            el.addEventListener('input', calculate);
+        });
+        calculate();
+    </script>
+</body>
+</html>
