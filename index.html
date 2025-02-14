@@ -155,6 +155,34 @@
             color: var(--primary-color);
             font-weight: 600;
             text-align: right;
+            position: relative;
+            cursor: help;
+        }
+        .tooltip {
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.9);
+            color: #fff;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            white-space: nowrap;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.2s;
+            pointer-events: none;
+            font-weight: 400;
+            line-height: 1.4;
+            max-width: 220px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            z-index: 1000;
+        }
+        .value:hover .tooltip {
+            opacity: 1;
+            visibility: visible;
         }
         .dashboard {
             display: grid;
@@ -162,7 +190,7 @@
             gap: 25px;
             margin-top: 30px;
         }
-        .metric-card {
+                .metric-card {
             background: linear-gradient(135deg, #ffffff 0%, #f8fafe 100%);
             border-radius: 12px;
             padding: 25px;
@@ -322,8 +350,7 @@
                     <input type="number" id="shippingPrice" value="7" required>
                 </div>
             </div>
-
-            <div class="input-group">
+                        <div class="input-group">
                 <label>⚙️ 费用设置</label>
                 <div class="input-row">
                     <span class="input-label">FBA物流费 ($)</span>
@@ -367,8 +394,7 @@
         <div class="results-container" id="results"></div>
         <div class="dashboard" id="dashboard"></div>
     </div>
-
-    <script>
+        <script>
         function calculate() {
             try {
                 const getValue = id => parseFloat(document.getElementById(id).value) || 0;
@@ -425,53 +451,53 @@
                     {
                         title: '📦 成本明细',
                         items: [
-                            { label: '采购成本 (￥)', value: inputs.purchaseCostCNY.toFixed(2) },
-                            { label: '头程成本 (￥)', value: shippingCostCNY.toFixed(2) },
-                            { label: '★ 总成本 (￥) ★', value: totalCostCNY.toFixed(2) },
-                            { label: 'FBA物流费 ($)', value: inputs.fbaFee.toFixed(2) },
-                            { label: '佣金 ($)', value: commission.toFixed(2) },
-                            { label: '仓储费 ($)', value: inputs.storageFee.toFixed(2) },
-                            { label: '退货成本 ($)', value: returnFee.toFixed(2) }
+                            { label: '采购成本 (￥)', value: inputs.purchaseCostCNY.toFixed(2), tooltip: '产品采购成本（含包装材料费用）' },
+                            { label: '头程成本 (￥)', value: shippingCostCNY.toFixed(2), tooltip: '头程物流费用（中国到FBA仓库）' },
+                            { label: '★ 总成本 (￥) ★', value: totalCostCNY.toFixed(2), tooltip: '总成本 = 采购成本 + 头程物流' },
+                            { label: 'FBA物流费 ($)', value: inputs.fbaFee.toFixed(2), tooltip: '亚马逊收取的末端配送费' },
+                            { label: '佣金 ($)', value: commission.toFixed(2), tooltip: '亚马逊平台销售佣金（按销售额比例）' },
+                            { label: '仓储费 ($)', value: inputs.storageFee.toFixed(2), tooltip: '月度库存仓储费用' },
+                            { label: '退货成本 ($)', value: returnFee.toFixed(2), tooltip: '预估退货产生的处理费用' }
                         ]
                     },
                     {
                         title: '💹 利润分析',
                         items: [
-                            { label: '净利润率', value: (profitRate * 100).toFixed(2) + '%' },
-                            { label: '单件利润 (￥)', value: profitCNY.toFixed(2) },
-                            { label: '单件利润 ($)', value: profitUSD.toFixed(2) },
-                            { label: '平台回款 (￥)', value: platformRefundCNY.toFixed(2) },
-                            { label: '平台回款 ($)', value: platformRefund.toFixed(2) },
-                            { label: '月利润 (￥万)', value: monthlyProfitCNY.toFixed(2) },
-                            { label: '年利润 (￥万)', value: annualProfitCNY.toFixed(2) }
+                            { label: '净利润率', value: (profitRate * 100).toFixed(2) + '%', tooltip: '（净利润 / 销售额）的百分比' },
+                            { label: '单件利润 (￥)', value: profitCNY.toFixed(2), tooltip: '单件产品人民币净利润' },
+                            { label: '单件利润 ($)', value: profitUSD.toFixed(2), tooltip: '单件产品美元净利润' },
+                            { label: '平台回款 (￥)', value: platformRefundCNY.toFixed(2), tooltip: '亚马逊实际结算金额（人民币）' },
+                            { label: '平台回款 ($)', value: platformRefund.toFixed(2), tooltip: '亚马逊实际结算金额（美元）' },
+                            { label: '月利润 (￥万)', value: monthlyProfitCNY.toFixed(2), tooltip: '预估月度总利润（万元）' },
+                            { label: '年利润 (￥万)', value: annualProfitCNY.toFixed(2), tooltip: '预估年度总利润（万元）' }
                         ]
                     },
                     {
                         title: '📊 销售表现',
                         items: [
-                            { label: '月销量', value: inputs.monthlySales },
-                            { label: '销售价格 ($)', value: inputs.salesPrice.toFixed(2) },
-                            { label: '月销售额 (￥)', value: monthlyRevenueCNY.toFixed(2) },
-                            { label: '月销售额 ($)', value: monthlyRevenueUSD.toFixed(2) },
-                            { label: '日均销量', value: dailySales.toFixed(2) },
-                            { label: '广告支出 ($)', value: adFee.toFixed(2) },
-                            { label: '广告占比 (%)', value: (inputs.adRate * 100).toFixed(2) + '%' },
-                            { label: '搜索转化率', value: (inputs.searchConversion * 100).toFixed(2) + '%' },
-                            { label: '退货率', value: (inputs.returnRate * 100).toFixed(2) + '%' }
+                            { label: '月销量', value: inputs.monthlySales, tooltip: '产品月均销售数量' },
+                            { label: '销售价格 ($)', value: inputs.salesPrice.toFixed(2), tooltip: '产品在亚马逊的销售价格' },
+                            { label: '月销售额 (￥)', value: monthlyRevenueCNY.toFixed(2), tooltip: '人民币计算的月销售额' },
+                            { label: '月销售额 ($)', value: monthlyRevenueUSD.toFixed(2), tooltip: '美元计算的月销售额' },
+                            { label: '日均销量', value: dailySales.toFixed(2), tooltip: '平均每日销售数量' },
+                            { label: '广告支出 ($)', value: adFee.toFixed(2), tooltip: '单笔广告费成本' },
+                            { label: '广告占比 (%)', value: (inputs.adRate * 100).toFixed(2) + '%', tooltip: '广告费占销售额比例' },
+                            { label: '搜索转化率', value: (inputs.searchConversion * 100).toFixed(2) + '%', tooltip: '搜索流量转化为购买的比例' },
+                            { label: '退货率', value: (inputs.returnRate * 100).toFixed(2) + '%', tooltip: '订单退货比例' }
                         ]
                     },
                     {
                         title: '🏦 资金分析',
                         items: [
-                            { label: '资金占用 (￥万)', value: capitalOccupiedCNY.toFixed(2) },
-                            { label: '压货成本 (￥万)', value: stockCostCNY.toFixed(2) },
-                            { label: '压货数量', value: stockQuantity.toFixed(2) },
-                            { label: '压货天数', value: inputs.stockDays },
-                            { label: '现金周期 (天)', value: cashCycle.toFixed(2) },
-                            { label: '账期天数', value: inputs.accountPeriod || '未设置' },
-                            { label: '成本回报率', value: (costReturnRatio * 100).toFixed(2) + '%' },
-                            { label: '年回报率 (%)', value: (annualROI * 100).toFixed(2) + '%' },
-                            { label: '回本周期 (天)', value: paybackDays.toFixed(2) }
+                            { label: '资金占用 (￥万)', value: capitalOccupiedCNY.toFixed(2), tooltip: '运营所需流动资金规模' },
+                            { label: '压货成本 (￥万)', value: stockCostCNY.toFixed(2), tooltip: '库存占用的资金成本' },
+                            { label: '压货数量', value: stockQuantity.toFixed(2), tooltip: '需要维持的库存数量' },
+                            { label: '压货天数', value: inputs.stockDays, tooltip: '库存周转天数' },
+                            { label: '现金周期 (天)', value: cashCycle.toFixed(2), tooltip: '资金周转完整周期天数' },
+                            { label: '账期天数', value: inputs.accountPeriod || '未设置', tooltip: '供应商账期天数' },
+                            { label: '成本回报率', value: (costReturnRatio * 100).toFixed(2) + '%', tooltip: '利润与总成本的比例' },
+                            { label: '年回报率 (%)', value: (annualROI * 100).toFixed(2) + '%', tooltip: '年度投资回报率' },
+                            { label: '回本周期 (天)', value: paybackDays.toFixed(2), tooltip: '收回初始投资所需天数' }
                         ]
                     }
                 ];
@@ -485,7 +511,10 @@
                             ${card.items.map(item => `
                                 <div class="result-item">
                                     <span class="label">${item.label}</span>
-                                    <span class="value">${item.value}</span>
+                                    <span class="value">
+                                        ${item.value}
+                                        ${item.tooltip ? `<span class="tooltip">${item.tooltip}</span>` : ''}
+                                    </span>
                                 </div>
                             `).join('')}
                         </div>
@@ -510,7 +539,7 @@
             }
         }
 
-        function updateDashboard(metrics) {
+                function updateDashboard(metrics) {
             try {
                 const dashboard = document.getElementById('dashboard');
                 
@@ -648,19 +677,11 @@
 
         function saveAsHTML() {
             try {
-                // 收集所有输入参数
                 const inputs = {};
                 document.querySelectorAll('input, select').forEach(element => {
                     inputs[element.id] = element.value;
                 });
 
-                // 收集计算结果
-                const results = {
-                    html: document.getElementById('results').innerHTML,
-                    dashboard: document.getElementById('dashboard').innerHTML
-                };
-
-                // 创建携带数据的HTML模板
                 const template = `<!DOCTYPE html>
 <html>
 <head>
@@ -672,36 +693,33 @@
 <body>
     <div class="container">${document.querySelector('.container').innerHTML}</div>
     <script>
-        // 嵌入核心逻辑
         ${calculate.toString()}
         ${updateDashboard.toString()}
 
-        // 状态恢复
         const SAVED_STATE = {
             inputs: ${JSON.stringify(inputs)},
-            results: ${JSON.stringify(results)}
+            results: {
+                html: ${JSON.stringify(document.getElementById('results').innerHTML)},
+                dashboard: ${JSON.stringify(document.getElementById('dashboard').innerHTML)}
+            }
         };
 
         document.querySelectorAll('input, select').forEach(el => {
             el.value = SAVED_STATE.inputs[el.id] || '';
         });
         
-        // 恢复计算结果
         document.getElementById('results').innerHTML = SAVED_STATE.results.html;
         document.getElementById('dashboard').innerHTML = SAVED_STATE.results.dashboard;
 
-        // 重新绑定事件
         document.querySelectorAll('input, select').forEach(el => {
             el.addEventListener('input', calculate);
         });
 
-        // 更新保存功能
         document.querySelector('.export-btn').onclick = ${saveAsHTML.toString()};
     <\/script>
 </body>
 </html>`;
 
-                // 创建下载
                 const productName = document.getElementById('productName').value.replace(/[^\w\u4e00-\u9fa5]/g, '') || 'analysis';
                 const dateStr = new Date().toISOString().split('T')[0];
                 const blob = new Blob([template], {type: 'text/html'});
@@ -715,7 +733,6 @@
             }
         }
 
-        // 初始化事件监听
         document.querySelectorAll('input, select').forEach(el => {
             el.addEventListener('input', calculate);
         });
